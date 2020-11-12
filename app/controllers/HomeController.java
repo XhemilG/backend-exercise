@@ -1,6 +1,7 @@
 package controllers;
 
-import play.mvc.*;
+import play.mvc.Controller;
+import play.mvc.Result;
 
 /**
  * This controller contains an action to handle HTTP requests
@@ -17,5 +18,7 @@ public class HomeController extends Controller {
     public Result index() {
         return ok(views.html.index.render());
     }
+
+    public void test() { }
 
 }
