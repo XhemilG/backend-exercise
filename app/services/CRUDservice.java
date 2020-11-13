@@ -2,18 +2,17 @@ package services;
 
 import com.google.inject.Inject;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.result.InsertOneResult;
 import executors.MongoExecutionContext;
 import models.LoginRequest;
 import mongo.IMongoDB;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import play.libs.Json;
-import play.mvc.Http;
-import play.mvc.Result;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import static com.mongodb.client.model.Filters.eq;
 
 public class CRUDservice {
 
@@ -28,30 +27,41 @@ public class CRUDservice {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
-            List<T> users = collection
+            return collection
                     .find()
                     .into(new ArrayList<>());
-            return users;
         }, mEC);
     }
 
-    public <T> CompletableFuture<T> save(Class<T> type, T item, String collectionName)
-    {
+    public <T> CompletableFuture<ObjectId> save(Class<T> type, T item, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
-            InsertOneResult result = collection.insertOne(item);
+            return collection.insertOne(item).getInsertedId().asObjectId().getValue();
+        }, mEC);
+    }
 
+    public <T> CompletableFuture<T> update(Class<T> type, T item, String id, String collectionName) {
+        return CompletableFuture.supplyAsync(() -> {
+            MongoCollection<T> collection = mongoDB.getMongoDatabase()
+                    .getCollection(collectionName, type);
 
+            Bson filter = eq("_id", new ObjectId(id));
+            collection.replaceOne(filter, item);
             return item;
         }, mEC);
     }
 
-    public <T> CompletableFuture<Boolean> find(Class<T> type, LoginRequest loginRequest, String collectionName)
-    {
+    public <T> CompletableFuture<ObjectId> delete(Class<T> type, String id, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
-            return true;
+            MongoCollection<T> collection = mongoDB.getMongoDatabase()
+                    .getCollection(collectionName, type);
+
+            Bson filter = eq("_id", new ObjectId(id));
+            collection.deleteOne(filter);
+            return new ObjectId(id);
         }, mEC);
     }
+
 }
