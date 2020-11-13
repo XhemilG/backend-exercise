@@ -34,6 +34,10 @@ public class SerializationService {
     @Inject
     ObjectMapper mapper;
 
+    public CompletableFuture<String> getToken(Request request) {
+        return CompletableFuture.supplyAsync(() -> request.getHeaders().get("token").get(), ec.current());
+    }
+
     public <T> CompletableFuture<JsonNode> toJsonNode(T result) {
         return CompletableFuture.supplyAsync(() -> {
             try {

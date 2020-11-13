@@ -2,6 +2,7 @@ package services;
 
 import com.google.inject.Inject;
 import com.mongodb.client.MongoCollection;
+import exceptions.RequestException;
 import executors.MongoExecutionContext;
 import models.LoginRequest;
 import mongo.IMongoDB;
@@ -11,6 +12,7 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -61,6 +63,31 @@ public class CRUDservice {
             Bson filter = eq("_id", new ObjectId(id));
             collection.deleteOne(filter);
             return new ObjectId(id);
+        }, mEC);
+    }
+
+    public <T> CompletableFuture<T> find(Class<T> type, String field, String value, String collectionName){
+        return CompletableFuture.supplyAsync(() -> {
+            MongoCollection<T> collection = mongoDB.getMongoDatabase()
+                    .getCollection(collectionName, type);
+
+            Bson filter = eq(field, value);
+            List<T> temp = collection.find(filter).into(new ArrayList<>());
+
+            T item;
+
+            try {
+                if (temp.size() == 1) {
+                    item = temp.get(0);
+                } else {
+                    throw new RequestException(404, "The required item doesn't exist!");
+                }
+            } catch (RequestException ex) {
+                ex.printStackTrace();
+                throw new CompletionException(ex);
+            }
+
+            return item;
         }, mEC);
     }
 
