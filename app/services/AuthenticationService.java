@@ -2,18 +2,20 @@ package services;
 
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import exceptions.RequestException;
+import io.jsonwebtoken.*;
 import models.User;
 import play.libs.concurrent.HttpExecutionContext;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import static play.mvc.Http.Status.UNAUTHORIZED;
 
 public class AuthenticationService {
 
@@ -30,7 +32,8 @@ public class AuthenticationService {
             Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
 
             JwtBuilder builder = Jwts.builder()
-                    .claim("content",user)
+                    .setExpiration(new Date(System.currentTimeMillis() + 30000))
+                    .claim("content", user.getId().toString())
                     .signWith(signatureAlgorithm, signingKey);
 
             String jwt = builder.compact();
@@ -41,10 +44,16 @@ public class AuthenticationService {
         }, ec.current());
     }
 
-    public CompletableFuture<Claims> parseToken(String jwt) {
-        return CompletableFuture.supplyAsync(() -> Jwts.parser()
-                .setSigningKey(DatatypeConverter.parseBase64Binary(config.getString("encryption.private_key")))
-                .parseClaimsJws(jwt)
-                .getBody(), ec.current());
+    public CompletableFuture<String> parseToken(String jwt) {
+        return CompletableFuture.supplyAsync(() -> {
+            try{
+                return Jwts.parser()
+                        .setSigningKey(DatatypeConverter.parseBase64Binary(config.getString("encryption.private_key")))
+                        .parseClaimsJws(jwt)
+                        .getBody().get("content", String.class);
+            } catch (SignatureException | ExpiredJwtException ex) {
+                throw new CompletionException(new RequestException(UNAUTHORIZED, ex.getMessage()));
+            }
+        }, ec.current());
     }
 }

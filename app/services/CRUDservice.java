@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import static com.mongodb.client.model.Filters.eq;
+import static play.mvc.Http.Status.NOT_FOUND;
 
 public class CRUDservice {
 
@@ -80,7 +81,7 @@ public class CRUDservice {
                 if (temp.size() == 1) {
                     item = temp.get(0);
                 } else {
-                    throw new RequestException(404, "The required item doesn't exist!");
+                    throw new RequestException(NOT_FOUND, "The required item doesn't exist!");
                 }
             } catch (RequestException ex) {
                 ex.printStackTrace();
