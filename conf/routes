@@ -3,4 +3,6 @@
 # ~~~~
 
 POST    /api/authenticate           controllers.AuthenticationController.authenticate(request: Request)
-POST    /api/checkToken           controllers.AuthenticationController.checkToken(request: Request)
+#POST    /api/checkToken           controllers.AuthenticationController.checkToken(request: Request)
+GET    /api/all           controllers.DashboardController.all(request: Request)
+POST    /api/save           controllers.DashboardController.save(request: Request)

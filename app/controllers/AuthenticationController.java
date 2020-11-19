@@ -31,11 +31,8 @@ public class AuthenticationController extends Controller {
                 .exceptionally(DatabaseUtils::throwableToResult);
     }
 
-    public CompletableFuture<Result> checkToken(Http.Request request) {
+    public CompletableFuture<String> checkToken(Http.Request request) {
         return service.getToken(request)
-                .thenCompose(data -> authService.parseToken(data))
-                .thenCompose((data) -> service.toJsonNode(data))
-                .thenApply(Results::ok)
-                .exceptionally(DatabaseUtils::throwableToResult);
+                .thenCompose(data -> authService.parseToken(data));
     }
 }

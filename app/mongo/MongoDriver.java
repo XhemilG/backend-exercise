@@ -6,9 +6,18 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.typesafe.config.Config;
+import models.Contents.BasicContent;
+import models.Contents.EmailContent;
+import models.Contents.ImageContent;
+import models.Contents.TextContent;
+import models.Contents.charts.BarChart;
+import models.Contents.charts.LineChart;
+import models.Contents.charts.PieChart;
+import models.Contents.charts.TreeMapChart;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import play.Logger;
 
@@ -44,10 +53,20 @@ public abstract class MongoDriver implements IMongoDB {
 			database = this.connect();
 		}
 
+		ClassModel<BasicContent> BasicContentModel = ClassModel.builder(BasicContent.class).enableDiscriminator(true).build();
+		ClassModel<EmailContent> EmailContentModel = ClassModel.builder(EmailContent.class).enableDiscriminator(true).build();
+		ClassModel<TextContent> TextContentModel = ClassModel.builder(TextContent.class).enableDiscriminator(true).build();
+		ClassModel<ImageContent> ImageContentModel = ClassModel.builder(ImageContent.class).enableDiscriminator(true).build();
+		ClassModel<BarChart> BarChartModel = ClassModel.builder(BarChart.class).enableDiscriminator(true).build();
+		ClassModel<LineChart> LineChartModel = ClassModel.builder(LineChart.class).enableDiscriminator(true).build();
+		ClassModel<PieChart> PieChartModel = ClassModel.builder(PieChart.class).enableDiscriminator(true).build();
+		ClassModel<TreeMapChart> TreeMapChartModel = ClassModel.builder(TreeMapChart.class).enableDiscriminator(true).build();
+
 		CodecProvider pojoCodecProvider =
 				PojoCodecProvider.builder()
 						.conventions(Collections.singletonList(ANNOTATION_CONVENTION))
 						.register("models")
+						.register(BasicContentModel, EmailContentModel, TextContentModel, ImageContentModel, BarChartModel, LineChartModel, PieChartModel, TreeMapChartModel)
 						.automatic(true)
 						.build();
 

@@ -32,8 +32,8 @@ public class AuthenticationService {
             Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
 
             JwtBuilder builder = Jwts.builder()
-                    .setExpiration(new Date(System.currentTimeMillis() + 30000))
-                    .claim("content", user.getId().toString())
+                    //.setExpiration(new Date(System.currentTimeMillis() + 30000))
+                    .claim("content", user.getUsername())
                     .signWith(signatureAlgorithm, signingKey);
 
             String jwt = builder.compact();
