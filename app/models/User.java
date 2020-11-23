@@ -12,6 +12,7 @@ import mongo.serializers.ObjectIdStringSerializer;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.types.ObjectId;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 @Data
@@ -25,9 +26,11 @@ public class User {
     @JsonDeserialize(using = ObjectIdDeSerializer.class)
     ObjectId id;
 
+    @NotEmpty
     String username;
 
     @JsonIgnore
+    @NotEmpty
     String password;
 
     List<Role> roles;

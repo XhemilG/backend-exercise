@@ -44,9 +44,8 @@ public class AuthenticationService {
         }, ec.current());
     }
 
-    public CompletableFuture<String> parseToken(String jwt) {
-        return CompletableFuture.supplyAsync(() -> {
-            try{
+    public String parseToken(String jwt) {
+         try{
                 return Jwts.parser()
                         .setSigningKey(DatatypeConverter.parseBase64Binary(config.getString("encryption.private_key")))
                         .parseClaimsJws(jwt)
@@ -54,6 +53,6 @@ public class AuthenticationService {
             } catch (SignatureException | ExpiredJwtException ex) {
                 throw new CompletionException(new RequestException(UNAUTHORIZED, ex.getMessage()));
             }
-        }, ec.current());
+
     }
 }

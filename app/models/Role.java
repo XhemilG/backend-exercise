@@ -10,6 +10,8 @@ import mongo.serializers.ObjectIdStringSerializer;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.types.ObjectId;
 
+import javax.validation.constraints.NotEmpty;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,6 +20,8 @@ public class Role {
     @BsonId
     @JsonSerialize(using = ObjectIdStringSerializer.class)
     @JsonDeserialize(using = ObjectIdDeSerializer.class)
-    public ObjectId id;
+    ObjectId id;
+
+    @NotEmpty
     String name;
 }

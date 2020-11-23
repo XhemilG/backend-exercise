@@ -1,45 +1,53 @@
 package services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Variable;
+import exceptions.RequestException;
 import executors.MongoExecutionContext;
 import models.Dashboard;
-import mongo.IMongoDB;
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import play.mvc.Http;
+import play.libs.Json;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import static play.mvc.Http.Status.FORBIDDEN;
+import static play.mvc.Http.Status.NOT_FOUND;
 
 public class DashboardService {
 
     @Inject
-    IMongoDB mongoDB;
+    MongoExecutionContext mEC;
 
     @Inject
-    MongoExecutionContext mEC;
+    HierarchyService hierarchyService;
+
+    @Inject
+    CRUDservice dbService;
 
     public CompletableFuture<List<Dashboard>> all(List<ObjectId> objectIdList) {
         return CompletableFuture.supplyAsync(() -> {
-            MongoCollection<Dashboard> collection = mongoDB.getMongoDatabase()
-                    .getCollection("dashboards", Dashboard.class);
-
             List<Bson> pipeline = new ArrayList<>();
 
             pipeline.add(
                     Aggregates.match(
                             Filters.or(
-                                    Filters.in("readACL", objectIdList),
-                                    Filters.in("writeACL", objectIdList)
+                                    Filters.and(
+                                            Filters.size("readACL", 0),
+                                            Filters.size("writeACL", 0)
+                                    ),
+                                    Filters.or(
+                                            Filters.in("readACL", objectIdList),
+                                            Filters.in("writeACL", objectIdList)
+                                    )
                             )
                     )
             );
@@ -57,8 +65,14 @@ public class DashboardService {
             contentsPipeline.add(
                     Aggregates.match(
                             Filters.or(
-                                    Filters.in("readACL", objectIdList),
-                                    Filters.in("writeACL", objectIdList)
+                                    Filters.and(
+                                            Filters.size("readACL", 0),
+                                            Filters.size("writeACL", 0)
+                                    ),
+                                    Filters.or(
+                                            Filters.in("readACL", objectIdList),
+                                            Filters.in("writeACL", objectIdList)
+                                    )
                             )
                     )
             );
@@ -70,12 +84,70 @@ public class DashboardService {
                     Aggregates.lookup("contents", variables , contentsPipeline, "contents")
             );
 
-            List<Dashboard> aggregated = collection
-                    .aggregate(pipeline, Dashboard.class)
-                    .into(new ArrayList<>());
+            return pipeline;
+        }, mEC)
+                .thenCompose(data -> dbService.all(Dashboard.class, data, "dashboards"));
+    }
 
-            return aggregated;
+    public CompletableFuture<Dashboard> getDashboard(List<Dashboard> dashboardList, String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            Dashboard board = new Dashboard();
+
+            for(Dashboard d: dashboardList) {
+                if(d.getId().toString().equals(id))
+                    board = d;
+            }
+
+            return hierarchyService.hierarchy(board, dashboardList);
         }, mEC);
     }
+
+    public CompletableFuture<Dashboard> update(List<ObjectId> objectIdList, String dashboardId, Dashboard updated) {
+        return write(objectIdList, dashboardId)
+                .thenCompose(filter -> dbService.update(Dashboard.class, updated, filter, "dashboards"))
+                .thenApply(result -> {
+                    if(!result) {
+                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
+                    }
+                    return updated;
+                });
+    }
+
+    public CompletableFuture<JsonNode> delete(List<ObjectId> objectIdList, String dashboardId) {
+        return write(objectIdList, dashboardId)
+                .thenCompose(filter -> dbService.delete(Dashboard.class, filter, "dashboards"))
+                .thenApply(result -> {
+                    if(!result) {
+                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
+                    }
+                    return Json.toJson("Deleted successfully: " + dashboardId);
+                });
+    }
+
+    public CompletableFuture<Bson> write(List<ObjectId> objectIdList, String id) {
+        return CompletableFuture.supplyAsync(() ->
+                Filters.and(
+                        Filters.in("writeACL", objectIdList),
+                        Filters.eq("_id", new ObjectId(id))
+                ), mEC);
+    }
+
+    public CompletableFuture<Boolean> exists(String dashboardId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try{
+                return new ObjectId(dashboardId);
+            } catch (IllegalArgumentException ex) {
+                throw new CompletionException(new RequestException(NOT_FOUND, "Dashboard doesn't exist!"));
+            }
+        }, mEC)
+                .thenCompose((data) -> dbService.find(Dashboard.class, "_id", data, "dashboards"))
+                .thenApply(result -> {
+                    if(result == null) {
+                        throw new CompletionException(new RequestException(NOT_FOUND, "Dashboard doesn't exist!"));
+                    }
+                    else return true;
+                });
+    }
+
 
 }

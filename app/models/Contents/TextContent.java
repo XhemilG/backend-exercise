@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 
+import javax.validation.constraints.NotEmpty;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
@@ -15,6 +17,7 @@ import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TextContent extends BasicContent{
 
+    @NotEmpty
     String text;
 
     @Override

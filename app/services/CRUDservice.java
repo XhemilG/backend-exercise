@@ -2,9 +2,10 @@ package services;
 
 import com.google.inject.Inject;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import exceptions.RequestException;
 import executors.MongoExecutionContext;
-import models.LoginRequest;
 import mongo.IMongoDB;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -25,13 +26,24 @@ public class CRUDservice {
     @Inject
     MongoExecutionContext mEC;
 
-    public <T> CompletableFuture<List<T>> all(Class<T> type, String collectionName) {
+    public <T> CompletableFuture<List<T>> all(Class<T> type, List<Bson> pipeline, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
             return collection
-                    .find()
+                    .aggregate(pipeline, type)
+                    .into(new ArrayList<>());
+        }, mEC);
+    }
+
+    public <T> CompletableFuture<List<T>> all(Class<T> type, Bson filter, String collectionName) {
+        return CompletableFuture.supplyAsync(() -> {
+            MongoCollection<T> collection = mongoDB.getMongoDatabase()
+                    .getCollection(collectionName, type);
+
+            return collection
+                    .find(filter)
                     .into(new ArrayList<>());
         }, mEC);
     }
@@ -45,50 +57,41 @@ public class CRUDservice {
         }, mEC);
     }
 
-    public <T> CompletableFuture<T> update(Class<T> type, T item, String id, String collectionName) {
+    public <T> CompletableFuture<Boolean> update(Class<T> type, T item, Bson filter, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
-            Bson filter = eq("_id", new ObjectId(id));
-            collection.replaceOne(filter, item);
-            return item;
+            UpdateResult result = collection.replaceOne(filter, item);
+            return result.wasAcknowledged();
         }, mEC);
     }
 
-    public <T> CompletableFuture<ObjectId> delete(Class<T> type, String id, String collectionName) {
+    public <T> CompletableFuture<Boolean> delete(Class<T> type, Bson filter, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
-            Bson filter = eq("_id", new ObjectId(id));
-            collection.deleteOne(filter);
-            return new ObjectId(id);
+            DeleteResult result = collection.deleteOne(filter);
+            return result.wasAcknowledged();
         }, mEC);
     }
 
     public <T> CompletableFuture<T> find(Class<T> type, String field, String value, String collectionName){
+        return find(type, eq(field, value), collectionName);
+    }
+
+    public <T> CompletableFuture<T> find(Class<T> type, String field, ObjectId value, String collectionName){
+        return find(type, eq(field, value), collectionName);
+    }
+
+    public <T> CompletableFuture<T> find(Class<T> type, Bson filter, String collectionName){
         return CompletableFuture.supplyAsync(() -> {
-            MongoCollection<T> collection = mongoDB.getMongoDatabase()
-                    .getCollection(collectionName, type);
+                MongoCollection<T> collection = mongoDB.getMongoDatabase()
+                        .getCollection(collectionName, type);
 
-            Bson filter = eq(field, value);
-            List<T> temp = collection.find(filter).into(new ArrayList<>());
-
-            T item;
-
-            try {
-                if (temp.size() == 1) {
-                    item = temp.get(0);
-                } else {
-                    throw new RequestException(NOT_FOUND, "The required item doesn't exist!");
-                }
-            } catch (RequestException ex) {
-                ex.printStackTrace();
-                throw new CompletionException(ex);
-            }
-
-            return item;
+                T temp = collection.find(filter).first();
+                return temp;
         }, mEC);
     }
 

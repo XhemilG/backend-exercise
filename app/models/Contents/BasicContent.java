@@ -39,7 +39,7 @@ import java.util.List;
 })
 @BsonDiscriminator(key = "type", value = "NONE")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class BasicContent implements Content{
+public class BasicContent {
 
     @BsonId
     @JsonSerialize(using = ObjectIdStringSerializer.class)
@@ -54,5 +54,5 @@ public abstract class BasicContent implements Content{
     @JsonSerialize(using = ListObjectIdSerializer.class)
     @JsonDeserialize(using = ListObjectIdDeSerializer.class)
     List<ObjectId> writeACL;
-    Type type = ContentType.NONE;
+    ContentType type = ContentType.NONE;
 }

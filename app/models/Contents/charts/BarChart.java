@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import models.Contents.ContentType;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 
 @EqualsAndHashCode(callSuper = true)
@@ -14,7 +15,7 @@ import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 public class BarChart extends BasicChart{
 
     @Override
-    public ChartTypes getType() {
-        return ChartTypes.Bar;
+    public ContentType getType() {
+        return ContentType.Bar;
     }
 }

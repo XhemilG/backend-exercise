@@ -2,7 +2,18 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-POST    /api/authenticate           controllers.AuthenticationController.authenticate(request: Request)
-#POST    /api/checkToken           controllers.AuthenticationController.checkToken(request: Request)
-GET    /api/all           controllers.DashboardController.all(request: Request)
-POST    /api/save           controllers.DashboardController.save(request: Request)
+POST        /api/authenticate                           controllers.AuthenticationController.authenticate(request: Request)
+
+GET         /api/dashboard/                             controllers.DashboardController.all(request: Request)
+GET         /api/dashboard/hierarchy                    controllers.DashboardController.hierarchy(request: Request)
+GET         /api/dashboard/:id                          controllers.DashboardController.getDashboard(request: Request, id: String)
+POST        /api/dashboard                              controllers.DashboardController.save(request: Request)
+PUT         /api/dashboard/:id                          controllers.DashboardController.update(request: Request, id: String)
+DELETE      /api/dashboard/:id                          controllers.DashboardController.delete(request: Request, id: String)
+
+GET         /api/dashboard/:id/content/                 controllers.ContentController.all(request: Request, id: String)
+GET         /api/dashboard/:id/content/:contentId       controllers.ContentController.getContent(request: Request, id: String, contentId: String)
+POST        /api/dashboard/:id/content                  controllers.ContentController.save(request: Request, id: String)
+PUT         /api/dashboard/:id/content/:contentId       controllers.ContentController.update(request: Request, id: String, contentId: String)
+DELETE      /api/dashboard/:id/content/:contentId       controllers.ContentController.delete(request: Request, id: String, contentId: String)
+

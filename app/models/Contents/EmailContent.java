@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 
+import javax.validation.constraints.Email;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
@@ -16,6 +18,7 @@ import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 public class EmailContent extends BasicContent{
     String text;
     String subject;
+    @Email
     String email;
 
     @Override

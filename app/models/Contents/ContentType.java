@@ -1,8 +1,12 @@
 package models.Contents;
 
-public enum ContentType implements Type{
+public enum ContentType {
     NONE,
     EMAIL,
     TEXT,
-    IMAGE
+    IMAGE,
+    Line,
+    Bar,
+    Pie,
+    Treemap
 }

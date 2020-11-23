@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.hibernate.validator.constraints.URL;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -15,6 +16,7 @@ import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ImageContent extends BasicContent{
 
+    @URL
     String url;
 
     @Override
