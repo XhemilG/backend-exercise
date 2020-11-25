@@ -17,3 +17,5 @@ POST        /api/dashboard/:id/content                  controllers.ContentContr
 PUT         /api/dashboard/:id/content/:contentId       controllers.ContentController.update(request: Request, id: String, contentId: String)
 DELETE      /api/dashboard/:id/content/:contentId       controllers.ContentController.delete(request: Request, id: String, contentId: String)
 
+GET         /api/chat/:room                             controllers.ChatController.chat(room: String)
+

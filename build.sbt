@@ -7,7 +7,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayJava)
 
 val akkaManagementVersion = "1.0.0"
 val akkaVersion = "2.6.8"
-val akkaHTTPVersion = "10.1.10"
+val akkaHTTPVersion = "10.1.12"
 
 scalaVersion := "2.12.9"
 
@@ -27,6 +27,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+  "com.typesafe.akka" %% "akka-cluster-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-cluster-sharding" % akkaVersion,
   "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
   "com.typesafe.akka" %% "akka-distributed-data" % akkaVersion,
@@ -34,6 +35,16 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
   "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+  // akka cluster related stuff
+  "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % akkaManagementVersion,
+  "com.lightbend.akka.management" %% "akka-management" % akkaManagementVersion,
+  "com.lightbend.akka.management" %% "akka-management-cluster-http" % akkaManagementVersion,
+  "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % akkaManagementVersion,
+  // akka htttp related stuff
+  "com.typesafe.akka" %% "akka-http-core" % akkaHTTPVersion,
+  "com.typesafe.akka" %% "akka-http2-support" % akkaHTTPVersion,
+  "com.typesafe.akka" %% "akka-http-spray-json" % akkaHTTPVersion,
+  "com.typesafe.akka" %% "akka-http" % akkaHTTPVersion,
 
   "com.github.karelcemus" %% "play-redis" % "2.5.0",
   "io.igl" %% "jwt" % "1.2.2"
