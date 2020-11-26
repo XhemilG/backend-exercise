@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import exceptions.RequestException;
 import executors.MongoExecutionContext;
 import mongo.IMongoDB;
 import org.bson.conversions.Bson;
@@ -13,10 +12,8 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 import static com.mongodb.client.model.Filters.eq;
-import static play.mvc.Http.Status.NOT_FOUND;
 
 public class CRUDservice {
 
@@ -90,8 +87,7 @@ public class CRUDservice {
                 MongoCollection<T> collection = mongoDB.getMongoDatabase()
                         .getCollection(collectionName, type);
 
-                T temp = collection.find(filter).first();
-                return temp;
+            return collection.find(filter).first();
         }, mEC);
     }
 

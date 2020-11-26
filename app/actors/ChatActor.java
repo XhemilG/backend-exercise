@@ -34,19 +34,21 @@ public class ChatActor extends AbstractActor {
      */
     private String roomId;
     private String username;
+    boolean hasWriteAccess;
     /**
      * Web socket represented from the front end
      */
     private ActorRef out;
 
-    public static Props props(ActorRef out, String roomId, String username) {
-        return Props.create(ChatActor.class, () -> new ChatActor(out, roomId, username));
+    public static Props props(ActorRef out, String roomId, String username, boolean flag) {
+        return Props.create(ChatActor.class, () -> new ChatActor(out, roomId, username, flag));
     }
 
-    private ChatActor(ActorRef out, String roomId, String username) {
+    private ChatActor(ActorRef out, String roomId, String username, Boolean hasWriteAccess) {
         this.roomId = roomId;
         this.out = out;
         this.username = username;
+        this.hasWriteAccess = hasWriteAccess;
         mediator.tell(new DistributedPubSubMediator.Subscribe(roomId, getSelf()), getSelf());
     }
 
@@ -69,7 +71,9 @@ public class ChatActor extends AbstractActor {
             out.tell(PONG, getSelf());
             return;
         }
-        broadcast(message);
+        if(hasWriteAccess) {
+            broadcast(message);
+        }
     }
 
     /**
