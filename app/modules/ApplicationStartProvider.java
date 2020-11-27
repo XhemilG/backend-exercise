@@ -1,6 +1,9 @@
 package modules;
 
 import akka.actor.ActorSystem;
+import akka.cluster.Cluster;
+import akka.management.cluster.bootstrap.ClusterBootstrap;
+import akka.management.javadsl.AkkaManagement;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.typesafe.config.Config;
@@ -31,7 +34,7 @@ public class ApplicationStartProvider {
         String secret = config.getString("play.http.secret.key");
         Logger.of(this.getClass()).debug("Play SECRET, {}", secret);
         Logger.of(this.getClass()).debug("SYSTEM NAME: {}", system.name());
-        /*// Akka Management hosts the HTTP routes used by bootstrap
+        // Akka Management hosts the HTTP routes used by bootstrap
         AkkaManagement.get(system).start();
 
         // Starting the bootstrap process needs to be done explicitly
@@ -40,6 +43,6 @@ public class ApplicationStartProvider {
         final Cluster cluster = Cluster.get(system);
         cluster.registerOnMemberUp(() -> {
             Logger.of(this.getClass()).debug("MEMBER IS UP");
-        });*/
+        });
     }
 }

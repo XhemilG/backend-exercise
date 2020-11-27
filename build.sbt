@@ -1,13 +1,21 @@
 name := """backend-exercise"""
 organization := "com.example"
 
-version := "1.0-SNAPSHOT"
+version := "1.0.0"
 
-lazy val root = (project in file(".")).enablePlugins(PlayJava)
+routesGenerator := InjectedRoutesGenerator
+
+PlayKeys.devSettings += "config.resource" -> "development.conf"
+
+fork in Test := true
+javaOptions in Test ++= Seq("-Dconfig.file=conf/test.conf", "-Dlogger.resource=test.logback.xml")
 
 val akkaManagementVersion = "1.0.0"
 val akkaVersion = "2.6.8"
 val akkaHTTPVersion = "10.1.12"
+
+sources in (Compile, doc) := Seq.empty
+publishArtifact in (Compile, packageDoc) := false
 
 scalaVersion := "2.12.9"
 
@@ -49,3 +57,11 @@ libraryDependencies ++= Seq(
   "com.github.karelcemus" %% "play-redis" % "2.5.0",
   "io.igl" %% "jwt" % "1.2.2"
 )
+
+resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+resolvers += Resolver.url("Typesafe Ivy releases", url("https://repo.typesafe.com/typesafe/ivy-releases"))(Resolver.ivyStylePatterns)
+resolvers += Resolver.typesafeRepo("releases")
+resolvers += Resolver.sbtPluginRepo("releases")
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+lazy val root = project.in(file(".")).enablePlugins(PlayScala)

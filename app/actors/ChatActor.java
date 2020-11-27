@@ -40,8 +40,8 @@ public class ChatActor extends AbstractActor {
      */
     private ActorRef out;
 
-    public static Props props(ActorRef out, String roomId, String username, boolean flag) {
-        return Props.create(ChatActor.class, () -> new ChatActor(out, roomId, username, flag));
+    public static Props props(ActorRef out, String roomId, String username, boolean hasWriteAccess) {
+        return Props.create(ChatActor.class, () -> new ChatActor(out, roomId, username, hasWriteAccess));
     }
 
     private ChatActor(ActorRef out, String roomId, String username, Boolean hasWriteAccess) {

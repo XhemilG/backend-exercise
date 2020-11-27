@@ -55,10 +55,10 @@ public class ChatController extends Controller {
                 .thenCompose(username -> userService.getRoles(username))
                 .thenCompose(userRoles -> chatRoomService.typeOfAccess(new ObjectId(room), userRoles))
                         .handle((res, ex) -> {
-                            System.out.println(res + " kkkk");
-                             if(ex != null)
+                             if(ex != null) {
                                  return F.Either.Left(forbidden(ex.getMessage()));
-                            System.out.println(res + " kkkk2");
+                             }
+
                             String username = authService.parseToken(requestHeader.getHeaders().get("token").get());
 
                              switch (res) {
@@ -67,7 +67,6 @@ public class ChatController extends Controller {
                                  case WRITE: return F.Either.Right(ActorFlow.actorRef((out) -> ChatActor.props(out, room, username, true), actorSystem, materializer));
                                  case ROOM_NOT_FOUND: return F.Either.Left(notFound("Room not found!"));
                              }
-
                             return F.Either.Left(internalServerError("Something went wrong"));
                     })
             );

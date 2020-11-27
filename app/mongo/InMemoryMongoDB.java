@@ -31,6 +31,7 @@ public final class InMemoryMongoDB extends MongoDriver {
 
 	@Override
 	public MongoDatabase connect() {
+		System.out.println("hiiiiiiiiiiiiiii");
 		IRuntimeConfig builder = new RuntimeConfigBuilder()
 				.defaults(Command.MongoD)
 				.processOutput(ProcessOutput.getDefaultInstanceSilent())
