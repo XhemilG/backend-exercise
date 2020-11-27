@@ -5,13 +5,14 @@ import models.Dashboard;
 import models.Role;
 import models.User;
 import mongo.IMongoDB;
+import mongo.InMemoryMongoDB;
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+import play.Logger;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
+import play.test.Helpers;
 import play.test.WithApplication;
 
 import java.util.ArrayList;
@@ -25,23 +26,36 @@ import static play.test.Helpers.route;
 
 public class DashboardControllerTest extends WithApplication {
 
-    @Inject
-    IMongoDB mongoDB;
+    InMemoryMongoDB mongoDB;
 
     @Before
     @Override
     public void startPlay() {
         super.startPlay();
+        mongoDB = app.injector().instanceOf(InMemoryMongoDB.class);
+    }
+
+    @After
+    @Override
+    public void stopPlay() {
+        super.stopPlay();
+        mongoDB.getMongoDatabase().drop();
+        mongoDB.disconnect();
+    }
+
+    @Test
+    public void dashboardOkCase() {
         System.out.println(mongoDB);
         MongoCollection<User> userCollection = mongoDB.getMongoDatabase()
                 .getCollection("users-exercise", User.class);
 
+        Logger.of(Constants.CLASS).debug("Mongo Collection {} ", userCollection.countDocuments());
         User user = new User(new ObjectId("5fb5088c320e8fa591d403bd"), "user1", "password",
-                        Arrays.asList(new Role(new ObjectId("5fb5088c320e8fa591d403be"), "admin")));
+                Arrays.asList(new Role(new ObjectId("5fb5088c320e8fa591d403be"), "admin")));
 
         User user2 = new User(new ObjectId("5fb524a9320e8fa591d40c60"), "Guido", "password2",
                 Arrays.asList(new Role(new ObjectId("5fb5088c320e8fa591d403bf"), "support"),
-                              new Role(new ObjectId("5fb5088c320e8fa591d403ab"), "marketing")));
+                        new Role(new ObjectId("5fb5088c320e8fa591d403ab"), "marketing")));
 
         userCollection.insertOne(user);
         userCollection.insertOne(user2);
@@ -59,10 +73,7 @@ public class DashboardControllerTest extends WithApplication {
 
         dashboardCollection.insertOne(dashboard);
         dashboardCollection.insertOne(dashboard2);
-    }
 
-    @Test
-    public void dashboardOkCase() {
         final Http.RequestBuilder dashboardUpdateRequest = new Http.RequestBuilder().method("PUT").uri("/api/dashboard/5fb52536320e8fa591d40c9c");
         dashboardUpdateRequest.header("token", "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoidXNlcjEifQ.CsnbZHxAI8yEogLOPiKzOmV9YlE9LiZyT9Fx3IGejDo");
 

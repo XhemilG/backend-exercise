@@ -15,7 +15,6 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
 import de.flapdoodle.embed.process.config.io.ProcessOutput;
 import de.flapdoodle.embed.process.runtime.Network;
-
 import java.io.IOException;
 
 /**
@@ -27,28 +26,34 @@ public final class InMemoryMongoDB extends MongoDriver {
 	@Inject
 	public InMemoryMongoDB(CoordinatedShutdown coordinatedShutdown, Config config) {
 		super(coordinatedShutdown, config);
+
+		this.init();
 	}
 
-	@Override
-	public MongoDatabase connect() {
-		System.out.println("hiiiiiiiiiiiiiii");
-		IRuntimeConfig builder = new RuntimeConfigBuilder()
-				.defaults(Command.MongoD)
-				.processOutput(ProcessOutput.getDefaultInstanceSilent())
-				.build();
-		MongodStarter starter = MongodStarter.getInstance(builder);
+	private void init() {
+		if (mongoEx != null) {
+			return;
+		}
 		try {
+			IRuntimeConfig builder = new RuntimeConfigBuilder()
+					.defaults(Command.MongoD)
+					.processOutput(ProcessOutput.getDefaultInstanceSilent())
+					.build();
+			MongodStarter starter = MongodStarter.getInstance(builder);
 			mongoEx = starter.prepare(new MongodConfigBuilder()
 					.version(Version.Main.PRODUCTION)
 					.net(new Net("localhost", 12345, Network.localhostIsIPv6()))
 					.build());
 			mongoEx.start();
-			client = MongoClients.create("mongodb://localhost:27017");
-			return client.getDatabase("test");
 		} catch (IOException e) {
 			e.printStackTrace();
-			return null;
 		}
+	}
+
+	@Override
+	public MongoDatabase connect() {
+		client = MongoClients.create("mongodb://localhost:27017");
+		return client.getDatabase("test");
 	}
 
 
