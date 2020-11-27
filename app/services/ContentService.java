@@ -79,7 +79,7 @@ public class ContentService {
         return write(objectIdList, dashboardId, contentId)
                 .thenCompose(filter -> dbService.update(BasicContent.class, updated, filter, "contents"))
                 .thenApply(result -> {
-                    if(!result) {
+                    if(result == 0) {
                         throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
                     }
                     return updated;
@@ -90,7 +90,7 @@ public class ContentService {
         return write(objectIdList, dashboardId, contentId)
                 .thenCompose(filter -> dbService.delete(BasicContent.class, filter, "contents"))
                 .thenApply(result -> {
-                    if(result == false) {
+                    if(result == 0) {
                         throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
                     }
                     return "Deleted successfully: " + contentId;
@@ -126,13 +126,13 @@ public class ContentService {
                         throw new CompletionException(new RequestException(NOT_FOUND, "Dashboard doesn't exist!"));
                     }
                     else return true;
-                }).thenCompose(result -> dbService.all(BasicContent.class, Filters.eq("dashboardId", new ObjectId(dashboardId)), "contents"))
+                })/*.thenCompose(result -> dbService.all(BasicContent.class, Filters.eq("dashboardId", new ObjectId(dashboardId)), "contents"))
                 .thenApply(result -> {
                     if(result == null || result.isEmpty()) {
                         throw new CompletionException(new RequestException(NOT_FOUND, "Widget doesn't exist!"));
                     }
                     else return true;
-                });
+                })*/;
     }
 
     public CompletableFuture<Boolean> exists(String dashboardId, String contentId) {

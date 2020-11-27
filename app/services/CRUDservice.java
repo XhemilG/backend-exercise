@@ -54,23 +54,23 @@ public class CRUDservice {
         }, mEC);
     }
 
-    public <T> CompletableFuture<Boolean> update(Class<T> type, T item, Bson filter, String collectionName) {
+    public <T> CompletableFuture<Long> update(Class<T> type, T item, Bson filter, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
             UpdateResult result = collection.replaceOne(filter, item);
-            return result.wasAcknowledged();
+            return result.getMatchedCount();
         }, mEC);
     }
 
-    public <T> CompletableFuture<Boolean> delete(Class<T> type, Bson filter, String collectionName) {
+    public <T> CompletableFuture<Long> delete(Class<T> type, Bson filter, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
             DeleteResult result = collection.deleteOne(filter);
-            return result.wasAcknowledged();
+            return result.getDeletedCount();
         }, mEC);
     }
 

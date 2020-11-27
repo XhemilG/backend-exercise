@@ -51,7 +51,8 @@ public class DashboardController extends Controller {
     }
 
     public CompletableFuture<Result> getDashboard(Http.Request request, String id) {
-        return userService.getRoles(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY))
+        return dashboardService.exists(id)
+                .thenCompose(data -> userService.getRoles(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
                 .thenCompose(data -> dashboardService.all(data))
                 .thenCompose(dashboards -> dashboardService.getDashboard(dashboards, id))
                 .thenCompose(data -> serializationService.toJsonNode(data))

@@ -106,7 +106,7 @@ public class DashboardService {
         return write(objectIdList, dashboardId)
                 .thenCompose(filter -> dbService.update(Dashboard.class, updated, filter, "dashboards"))
                 .thenApply(result -> {
-                    if(!result) {
+                    if(result == 0) {
                         throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
                     }
                     return updated;
@@ -117,7 +117,7 @@ public class DashboardService {
         return write(objectIdList, dashboardId)
                 .thenCompose(filter -> dbService.delete(Dashboard.class, filter, "dashboards"))
                 .thenApply(result -> {
-                    if(!result) {
+                    if(result == 0) {
                         throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
                     }
                     return Json.toJson("Deleted successfully: " + dashboardId);
