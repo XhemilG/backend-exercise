@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 public class ChatRoomService {
 
     @Inject
-    CRUDservice dbService;
+    DBservice dbService;
 
     private static final String COLLECTION_NAME = "chat-rooms";
 

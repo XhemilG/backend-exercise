@@ -3,7 +3,7 @@ package models.Contents.charts;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import models.Contents.BasicContent;
+import models.Contents.Content;
 
 import java.util.List;
 
@@ -11,6 +11,6 @@ import java.util.List;
 @lombok.Data
 @AllArgsConstructor
 @NoArgsConstructor
-public abstract class BasicChart extends BasicContent {
+public abstract class Chart extends Content {
     List<Data> data;
 }

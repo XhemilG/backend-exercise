@@ -12,7 +12,7 @@ import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 @AllArgsConstructor
 @BsonDiscriminator(key = "type", value = "Treemap")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TreeMapChart extends BasicChart{
+public class TreeMapChart extends Chart {
 
     @Override
     public ContentType getType() {

@@ -17,7 +17,7 @@ import static play.mvc.Http.Status.NOT_FOUND;
 public class UserService {
 
     @Inject
-    CRUDservice dbService;
+    DBservice dbService;
 
     private static final String COLLECTION_NAME = "users-exercise";
 
@@ -31,7 +31,7 @@ public class UserService {
                 });
     }
 
-    public CompletableFuture<List<ObjectId>> getRoles(String username) {
+    public CompletableFuture<List<ObjectId>> getUserACL(String username) {
         return dbService.find(User.class, "username", username, COLLECTION_NAME)
                 .thenApply(user -> {
                     try {

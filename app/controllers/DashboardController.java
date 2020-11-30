@@ -1,7 +1,7 @@
 package controllers;
 
 import actions.Attributes;
-import actions.Authenticate;
+import actions.Authenticated;
 import actions.Validated;
 import com.google.inject.Inject;
 import models.Dashboard;
@@ -9,12 +9,15 @@ import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
-import services.*;
+import services.DashboardService;
+import services.HierarchyService;
+import services.SerializationService;
+import services.UserService;
 import utils.DatabaseUtils;
 
 import java.util.concurrent.CompletableFuture;
 
-@Authenticate
+@Authenticated
 public class DashboardController extends Controller {
 
     @Inject
@@ -29,12 +32,9 @@ public class DashboardController extends Controller {
     @Inject
     HierarchyService hierarchyService;
 
-    @Inject
-    CRUDservice dbService;
-
     public CompletableFuture<Result> all(Http.Request request) {
-        return userService.getRoles(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY))
-                .thenCompose(data -> dashboardService.all(data))
+        return userService.getUserACL(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY))
+                .thenCompose(userACL -> dashboardService.all(userACL))
                 .thenCompose(data -> serializationService.toJsonNode(data))
                 .thenApply(Results::ok)
                 .exceptionally(DatabaseUtils::throwableToResult);
@@ -42,8 +42,8 @@ public class DashboardController extends Controller {
 
 
     public CompletableFuture<Result> hierarchy(Http.Request request) {
-        return userService.getRoles(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY))
-                .thenCompose(data -> dashboardService.all(data))
+        return userService.getUserACL(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY))
+                .thenCompose(userACL -> dashboardService.all(userACL))
                 .thenCompose(dashboards -> hierarchyService.hierarchy(dashboards))
                 .thenCompose(data -> serializationService.toJsonNode(data))
                 .thenApply(Results::ok)
@@ -52,8 +52,8 @@ public class DashboardController extends Controller {
 
     public CompletableFuture<Result> getDashboard(Http.Request request, String id) {
         return dashboardService.exists(id)
-                .thenCompose(data -> userService.getRoles(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
-                .thenCompose(data -> dashboardService.all(data))
+                .thenCompose(data -> userService.getUserACL(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
+                .thenCompose(userACL -> dashboardService.all(userACL))
                 .thenCompose(dashboards -> dashboardService.getDashboard(dashboards, id))
                 .thenCompose(data -> serializationService.toJsonNode(data))
                 .thenApply(Results::ok)
@@ -63,8 +63,8 @@ public class DashboardController extends Controller {
     @Validated(value = Dashboard.class)
     public CompletableFuture<Result> update(Http.Request request, String id) {
         return dashboardService.exists(id)
-                .thenCompose(data -> userService.getRoles(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
-                .thenCompose(data -> dashboardService.update(data, id, (Dashboard) request.attrs().get(Attributes.TYPED_KEY)))
+                .thenCompose(data -> userService.getUserACL(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
+                .thenCompose(userACL -> dashboardService.update(userACL, id, (Dashboard) request.attrs().get(Attributes.TYPED_KEY)))
                 .thenCompose(data -> serializationService.toJsonNode(data))
                 .thenApply(Results::ok)
                 .exceptionally(DatabaseUtils::throwableToResult);
@@ -72,8 +72,8 @@ public class DashboardController extends Controller {
 
     public CompletableFuture<Result> delete(Http.Request request, String id) {
         return dashboardService.exists(id)
-                .thenCompose(data -> userService.getRoles(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
-                .thenCompose(data -> dashboardService.delete(data, id))
+                .thenCompose(data -> userService.getUserACL(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
+                .thenCompose(userACL -> dashboardService.delete(userACL, id))
                 .thenCompose(data -> serializationService.toJsonNode(data))
                 .thenApply(Results::ok)
                 .exceptionally(DatabaseUtils::throwableToResult);
@@ -81,7 +81,7 @@ public class DashboardController extends Controller {
 
     @Validated(value = Dashboard.class)
     public CompletableFuture<Result> save(Http.Request request) {
-        return dbService.save(Dashboard.class, (Dashboard) request.attrs().get(Attributes.TYPED_KEY), "dashboards")
+        return dashboardService.save((Dashboard) request.attrs().get(Attributes.TYPED_KEY))
                 .thenCompose(data -> serializationService.toJsonNode(data))
                 .thenApply(Results::ok)
                 .exceptionally(DatabaseUtils::throwableToResult);

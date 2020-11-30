@@ -27,6 +27,13 @@ public class DashboardControllerTest extends WithApplication {
 
     InMemoryMongoDB mongoDB;
 
+    private final String AUTHORIZED_USER_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoidXNlcjEifQ.CsnbZHxAI8yEogLOPiKzOmV9YlE9LiZyT9Fx3IGejDo";
+    private final String UNAUTHORIZED_USER_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoiR3VpZG8ifQ.ha-BmuT9yLsHRjtgt2qIjVWQ2DisiyZO_N31rdKHz5Y";
+
+    Dashboard dashboard = new Dashboard(new ObjectId("5fb52536320e8fa591d40c9c"), "Retail cockpit", "Retail cockpit (overview)", null,
+            System.currentTimeMillis(), Arrays.asList(new ObjectId("5fb524a9320e8fa591d40c60")), Arrays.asList(new ObjectId("5fb5088c320e8fa591d403bd")),
+            new ArrayList<>(), new ArrayList<>());
+
     @Before
     @Override
     public void startPlay() {
@@ -47,49 +54,31 @@ public class DashboardControllerTest extends WithApplication {
         userCollection.insertOne(user);
         userCollection.insertOne(user2);
 
-        Dashboard dashboard = new Dashboard(new ObjectId("5fb52536320e8fa591d40c9c"), "Retail cockpit", "Retail cockpit (overview)", null,
-                System.currentTimeMillis(), Arrays.asList(new ObjectId("5fb524a9320e8fa591d40c60")), Arrays.asList(new ObjectId("5fb5088c320e8fa591d403bd")),
-                new ArrayList<>(), new ArrayList<>());
-
-        Dashboard dashboard2 = new Dashboard(new ObjectId("5fb5258e320e8fa591d40cc7"), "Assortment optimization", "Assortment optimization (overview)", new ObjectId("5fb52536320e8fa591d40c9c"),
-                System.currentTimeMillis(), Arrays.asList(new ObjectId("5fb524a9320e8fa591d40c60")), Arrays.asList(new ObjectId("5fb5088c320e8fa591d403bd")),
-                new ArrayList<>(), new ArrayList<>());
-
-        Http.RequestBuilder dashboardInsertRequest = new Http.RequestBuilder().method("POST").uri("/api/dashboard");
-        dashboardInsertRequest.header("token", "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoidXNlcjEifQ.CsnbZHxAI8yEogLOPiKzOmV9YlE9LiZyT9Fx3IGejDo");
+        final Http.RequestBuilder dashboardInsertRequest = new Http.RequestBuilder().method("POST").uri("/api/dashboard");
+        dashboardInsertRequest.header("token", AUTHORIZED_USER_TOKEN);
         dashboardInsertRequest.bodyJson(Json.toJson(dashboard));
 
-        Result insertResult = route(app, dashboardInsertRequest);
-        assertEquals(OK, insertResult.status());
-
-        dashboardInsertRequest = new Http.RequestBuilder().method("POST").uri("/api/dashboard");
-        dashboardInsertRequest.header("token", "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoidXNlcjEifQ.CsnbZHxAI8yEogLOPiKzOmV9YlE9LiZyT9Fx3IGejDo");
-        dashboardInsertRequest.bodyJson(Json.toJson(dashboard2));
-
-        insertResult = route(app, dashboardInsertRequest);
+        final Result insertResult = route(app, dashboardInsertRequest);
         assertEquals(OK, insertResult.status());
     }
 
     @Test
     public void dashboardUpdateTest() {
         final Http.RequestBuilder dashboardUpdateRequest = new Http.RequestBuilder().method("PUT").uri("/api/dashboard/5fb52536320e8fa591d40c9c");
-        dashboardUpdateRequest.header("token", "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoidXNlcjEifQ.CsnbZHxAI8yEogLOPiKzOmV9YlE9LiZyT9Fx3IGejDo");
+        dashboardUpdateRequest.header("token", AUTHORIZED_USER_TOKEN);
 
-        Dashboard updatedDashboard = new Dashboard(new ObjectId("5fb52536320e8fa591d40c9c"), "Updated", "Retail cockpit (overview)", null,
-                System.currentTimeMillis(), Arrays.asList(new ObjectId("5fb524a9320e8fa591d40c60")), Arrays.asList(new ObjectId("5fb5088c320e8fa591d403bd")),
-                new ArrayList<>(), new ArrayList<>());
-
-        dashboardUpdateRequest.bodyJson(Json.toJson(updatedDashboard));
+        dashboard.setName("updated");
+        dashboardUpdateRequest.bodyJson(Json.toJson(dashboard));
 
         final Result result = route(app, dashboardUpdateRequest);
         assertEquals(OK, result.status());
-        assertTrue(contentAsString(result).contains(Json.toJson(updatedDashboard).asText()));
+        assertTrue(contentAsString(result).contains(Json.toJson(dashboard).asText()));
     }
 
     @Test
     public void dashboardDeleteForbiddenTest() {
         final Http.RequestBuilder dashboardDeleteRequest = new Http.RequestBuilder().method("DELETE").uri("/api/dashboard/5fb52536320e8fa591d40c9c");
-        dashboardDeleteRequest.header("token", "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoiR3VpZG8ifQ.ha-BmuT9yLsHRjtgt2qIjVWQ2DisiyZO_N31rdKHz5Y");
+        dashboardDeleteRequest.header("token", UNAUTHORIZED_USER_TOKEN);
 
         final Result result = route(app, dashboardDeleteRequest);
         assertEquals(FORBIDDEN, result.status());
@@ -98,23 +87,22 @@ public class DashboardControllerTest extends WithApplication {
     @Test
     public void dashboardSaveBadRequestTest() {
         final Http.RequestBuilder dashboardSaveRequest = new Http.RequestBuilder().method("POST").uri("/api/dashboard");
-        dashboardSaveRequest.header("token", "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoidXNlcjEifQ.CsnbZHxAI8yEogLOPiKzOmV9YlE9LiZyT9Fx3IGejDo");
+        dashboardSaveRequest.header("token", AUTHORIZED_USER_TOKEN);
 
-        Dashboard updatedDashboard = new Dashboard(new ObjectId("5fb52536320e8fa591d40c94"), null, "Retail cockpit (overview)", null,
-                System.currentTimeMillis(), Arrays.asList(new ObjectId("5fb524a9320e8fa591d40c60")), Arrays.asList(new ObjectId("5fb5088c320e8fa591d403bd")),
-                new ArrayList<>(), new ArrayList<>());
+        dashboard.setId(new ObjectId("5fb52536320e8fa591d40c94"));
+        dashboard.setName(null);
 
-        dashboardSaveRequest.bodyJson(Json.toJson(updatedDashboard));
+        dashboardSaveRequest.bodyJson(Json.toJson(dashboard));
 
         final Result result = route(app, dashboardSaveRequest);
         assertEquals(BAD_REQUEST, result.status());
-        assertTrue(contentAsString(result).contains(Json.toJson(updatedDashboard).asText()));
+        assertTrue(contentAsString(result).contains(Json.toJson(dashboard).asText()));
     }
 
     @Test
     public void dashboardGetNotFoundTest() {
         final Http.RequestBuilder dashboardGetRequest = new Http.RequestBuilder().method("GET").uri("/api/dashboard/5fb52536320e8fa591d40c94");
-        dashboardGetRequest.header("token", "eyJhbGciOiJIUzI1NiJ9.eyJjb250ZW50IjoidXNlcjEifQ.CsnbZHxAI8yEogLOPiKzOmV9YlE9LiZyT9Fx3IGejDo");
+        dashboardGetRequest.header("token", AUTHORIZED_USER_TOKEN);
 
         final Result result = route(app, dashboardGetRequest);
         assertEquals(NOT_FOUND, result.status());

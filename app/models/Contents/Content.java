@@ -39,7 +39,7 @@ import java.util.List;
 })
 @BsonDiscriminator(key = "type", value = "NONE")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class BasicContent {
+public class Content {
 
     @BsonId
     @JsonSerialize(using = ObjectIdStringSerializer.class)

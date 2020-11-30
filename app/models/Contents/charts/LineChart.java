@@ -12,7 +12,7 @@ import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 @AllArgsConstructor
 @BsonDiscriminator(key = "type", value = "Line")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class LineChart extends BasicChart{
+public class LineChart extends Chart {
 
     @Override
     public ContentType getType() {

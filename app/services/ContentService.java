@@ -1,16 +1,15 @@
 package services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
-import com.mongodb.client.model.Filters;
 import exceptions.RequestException;
 import executors.MongoExecutionContext;
-import models.Contents.BasicContent;
+import models.Contents.Content;
 import models.Dashboard;
-import org.bson.conversions.Bson;
+import models.NameValuePair;
 import org.bson.types.ObjectId;
 import play.libs.Json;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -24,126 +23,78 @@ public class ContentService {
     MongoExecutionContext mEC;
 
     @Inject
-    CRUDservice dbService;
+    DBservice dbService;
 
-    public CompletableFuture<List<BasicContent>> all(List<ObjectId> objectIdList, String dashboardId) {
+    @Inject
+    Util helper;
+
+    private static final String COLLECTION_NAME = "contents";
+
+    public CompletableFuture<List<Content>> all(List<ObjectId> objectIdList, String dashboardId) {
         return CompletableFuture.supplyAsync(() ->
-                    Filters.and(
-                            Filters.or(
-                                    Filters.and(
-                                            Filters.size("readACL", 0),
-                                            Filters.size("writeACL", 0)
-                                    ),
-                                    Filters.or(
-                                            Filters.in("readACL", objectIdList),
-                                            Filters.in("writeACL", objectIdList)
-                                    )
-                            ),
-                            Filters.eq("dashboardId", new ObjectId(dashboardId))
-                    ), mEC)
-                .thenCompose(filter -> dbService.all(BasicContent.class, filter, "contents"))
+                    helper.authorizationFilter(true, objectIdList, new NameValuePair("dashboardId", dashboardId)), mEC)
+                .thenCompose(filter -> dbService.all(Content.class, filter, COLLECTION_NAME))
                 .thenApply(result -> {
                     if(result == null || result.isEmpty()) {
-                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
+                        throw new CompletionException(new RequestException(FORBIDDEN, "Unauthorized"));
                     }
                     return result;
                 });
     }
 
-    public CompletableFuture<BasicContent> getContent(List<ObjectId> objectIdList, String dashboardId, String contentId) {
+    public CompletableFuture<Content> getContent(List<ObjectId> objectIdList, String dashboardId, String contentId) {
         return CompletableFuture.supplyAsync(() ->
-                    Filters.and(
-                            Filters.or(
-                                    Filters.and(
-                                            Filters.size("readACL", 0),
-                                            Filters.size("writeACL", 0)
-                                    ),
-                                    Filters.or(
-                                            Filters.in("readACL", objectIdList),
-                                            Filters.in("writeACL", objectIdList)
-                                    )
-                            ),
-                        Filters.eq("dashboardId", new ObjectId(dashboardId)),
-                        Filters.eq("_id", new ObjectId(contentId))
-                    ), mEC)
-                .thenCompose(filter -> dbService.find(BasicContent.class, filter, "contents"))
+                        helper.authorizationFilter(true, objectIdList, new NameValuePair("dashboardId", dashboardId),
+                                new NameValuePair("_id", contentId)), mEC)
+                .thenCompose(filter -> dbService.find(Content.class, filter, COLLECTION_NAME))
                 .thenApply(result -> {
                     if(result == null) {
-                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
+                        throw new CompletionException(new RequestException(FORBIDDEN, "Unauthorized"));
                     }
                     return result;
                 });
     }
 
-    public CompletableFuture<BasicContent> update(List<ObjectId> objectIdList, String dashboardId, String contentId, BasicContent updated) {
-        return write(objectIdList, dashboardId, contentId)
-                .thenCompose(filter -> dbService.update(BasicContent.class, updated, filter, "contents"))
-                .thenApply(result -> {
-                    if(result == 0) {
-                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
-                    }
-                    return updated;
-                });
-    }
-
-    public CompletableFuture<String> delete(List<ObjectId> objectIdList, String dashboardId, String contentId) {
-        return write(objectIdList, dashboardId, contentId)
-                .thenCompose(filter -> dbService.delete(BasicContent.class, filter, "contents"))
-                .thenApply(result -> {
-                    if(result == 0) {
-                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
-                    }
-                    return "Deleted successfully: " + contentId;
-                });
-    }
-
-    public CompletableFuture<Bson> write(List<ObjectId> objectIdList, String dashboardId, String contentId) {
+    public CompletableFuture<Content> update(List<ObjectId> objectIdList, String dashboardId, String contentId, Content updated) {
         return CompletableFuture.supplyAsync(() ->
-                Filters.and(
-                        Filters.or(
-                                Filters.and(
-                                        Filters.size("readACL", 0),
-                                        Filters.size("writeACL", 0)
-                                ),
-                                Filters.in("writeACL", objectIdList)
-                        ),
-                        Filters.eq("dashboardId", new ObjectId(dashboardId)),
-                        Filters.eq("_id", new ObjectId(contentId))
-                ), mEC);
+                        helper.authorizationFilter(false, objectIdList, new NameValuePair("_id", contentId),
+                                new NameValuePair("dashboardId", dashboardId)), mEC)
+                .thenCompose(filter -> dbService.update(Content.class, updated, filter, COLLECTION_NAME))
+                .thenApply(result -> {
+                    if(result == null) {
+                        throw new CompletionException(new RequestException(FORBIDDEN, "Unauthorized"));
+                    }
+                    return result;
+                });
+    }
+
+    public CompletableFuture<JsonNode> delete(List<ObjectId> objectIdList, String dashboardId, String contentId) {
+        return CompletableFuture.supplyAsync(() ->
+                    helper.authorizationFilter(false, objectIdList, new NameValuePair("_id", contentId),
+                            new NameValuePair("dashboardId", dashboardId)), mEC)
+                .thenCompose(filter -> dbService.delete(Content.class, filter, COLLECTION_NAME))
+                .thenApply(result -> {
+                    if(result == 0) {
+                        throw new CompletionException(new RequestException(FORBIDDEN, "Unauthorized"));
+                    }
+                    return Json.toJson("Deleted successfully: " + contentId);
+                });
     }
 
     public CompletableFuture<Boolean> exists(String dashboardId) {
-        return CompletableFuture.supplyAsync(() -> {
-            try{
-                return new ObjectId(dashboardId);
-            } catch (IllegalArgumentException ex) {
-                throw new CompletionException(new RequestException(NOT_FOUND, "Dashboard doesn't exist!"));
-            }
-        }, mEC)
+        return CompletableFuture.supplyAsync(() -> helper.getObjectIdIfValid(dashboardId), mEC)
                 .thenCompose(data -> dbService.find(Dashboard.class, "_id", data, "dashboards"))
                 .thenApply(result -> {
                     if(result == null) {
                         throw new CompletionException(new RequestException(NOT_FOUND, "Dashboard doesn't exist!"));
                     }
                     else return true;
-                })/*.thenCompose(result -> dbService.all(BasicContent.class, Filters.eq("dashboardId", new ObjectId(dashboardId)), "contents"))
-                .thenApply(result -> {
-                    if(result == null || result.isEmpty()) {
-                        throw new CompletionException(new RequestException(NOT_FOUND, "Widget doesn't exist!"));
-                    }
-                    else return true;
-                })*/;
+                });
     }
 
     public CompletableFuture<Boolean> exists(String dashboardId, String contentId) {
-        return CompletableFuture.supplyAsync(() -> {
-            try{
-                return new ObjectId(contentId);
-            } catch (IllegalArgumentException ex) {
-                throw new CompletionException(new RequestException(NOT_FOUND, "Widget doesn't exist!"));
-            }
-        }, mEC)
-                .thenCompose(data -> dbService.find(BasicContent.class, "_id", data, "contents"))
+        return CompletableFuture.supplyAsync(() -> helper.getObjectIdIfValid(contentId), mEC)
+                .thenCompose(data -> dbService.find(Content.class, "_id", data, COLLECTION_NAME))
                 .thenApply(result -> {
                     if(result == null) {
                         throw new CompletionException(new RequestException(NOT_FOUND, "Widget doesn't exist!"));
@@ -155,28 +106,8 @@ public class ContentService {
 
 
     public CompletableFuture<List<ObjectId>> hasAccessToDashboard(List<ObjectId> objectIdList, String dashboardId, boolean read) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                List<Bson> readWriteFilters = new ArrayList<>();
-                readWriteFilters.add(Filters.in("writeACL", objectIdList));
-
-                if(read) {
-                    readWriteFilters.add(Filters.in("readACL", objectIdList));
-                }
-
-                Bson authorizationFilter = Filters.or(readWriteFilters);
-
-                Bson filter =
-                        Filters.and(
-                                authorizationFilter,
-                                Filters.eq("_id", new ObjectId(dashboardId))
-                        );
-
-                return filter;
-            } catch (IllegalArgumentException ex) {
-                throw new CompletionException(new RequestException(NOT_FOUND, "Unauthorized"));
-            }
-        }, mEC)
+        return CompletableFuture.supplyAsync(() ->
+                helper.authorizationFilter(read, objectIdList, new NameValuePair("_id", dashboardId)), mEC)
                 .thenCompose(filter ->  dbService.find(Dashboard.class, filter, "dashboards"))
                 .thenApply(data -> {
                         if(data == null) {

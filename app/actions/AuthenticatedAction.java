@@ -2,6 +2,8 @@ package actions;
 
 import com.google.inject.Inject;
 import exceptions.RequestException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.SignatureException;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -15,7 +17,7 @@ import java.util.concurrent.CompletionStage;
 
 import static play.mvc.Http.Status.FORBIDDEN;
 
-public class AuthenticateAction extends Action<Authenticate> {
+public class AuthenticatedAction extends Action<Authenticated> {
 
     @Inject
     AuthenticationService authService;
@@ -29,9 +31,8 @@ public class AuthenticateAction extends Action<Authenticate> {
 
             request = request.addAttr(Attributes.AUTHENTICATION_TYPED_KEY, username);
             return delegate.call(request);
-
-        } catch (NoSuchElementException ex) {
-            return CompletableFuture.completedFuture(DatabaseUtils.throwableToResult(new CompletionException(new RequestException(FORBIDDEN, "Unauthorized"))));
+        } catch (NoSuchElementException | SignatureException | ExpiredJwtException ex) {
+            return CompletableFuture.completedFuture(DatabaseUtils.throwableToResult(new CompletionException(new RequestException(FORBIDDEN, ex.getMessage()))));
         }
     }
 }

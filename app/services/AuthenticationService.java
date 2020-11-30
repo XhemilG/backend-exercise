@@ -32,7 +32,7 @@ public class AuthenticationService {
             Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
 
             JwtBuilder builder = Jwts.builder()
-                    //.setExpiration(new Date(System.currentTimeMillis() + 30000))
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10))
                     .claim("content", user.getUsername())
                     .signWith(signatureAlgorithm, signingKey);
 
@@ -51,7 +51,7 @@ public class AuthenticationService {
                         .parseClaimsJws(jwt)
                         .getBody().get("content", String.class);
             } catch (SignatureException | ExpiredJwtException ex) {
-                throw new CompletionException(new RequestException(UNAUTHORIZED, ex.getMessage()));
+                throw ex;
             }
 
     }

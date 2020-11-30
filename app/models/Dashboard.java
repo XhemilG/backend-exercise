@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import models.Contents.BasicContent;
+import models.Contents.Content;
 import mongo.serializers.ListObjectIdDeSerializer;
 import mongo.serializers.ListObjectIdSerializer;
 import mongo.serializers.ObjectIdDeSerializer;
@@ -52,7 +52,7 @@ public class Dashboard {
     @JsonDeserialize(using = ListObjectIdDeSerializer.class)
     List<ObjectId> writeACL;
 
-    List<BasicContent> contents;
+    List<Content> contents;
 
     @BsonIgnore
     List<Dashboard> children;

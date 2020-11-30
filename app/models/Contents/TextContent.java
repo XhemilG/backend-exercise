@@ -15,7 +15,7 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor
 @BsonDiscriminator(key = "type", value = "TEXT")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TextContent extends BasicContent{
+public class TextContent extends Content {
 
     @NotEmpty
     String text;

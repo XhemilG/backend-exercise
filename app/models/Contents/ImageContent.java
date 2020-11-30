@@ -8,14 +8,17 @@ import lombok.NoArgsConstructor;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 import org.hibernate.validator.constraints.URL;
 
+import javax.validation.constraints.NotEmpty;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @BsonDiscriminator(key = "type", value = "IMAGE")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ImageContent extends BasicContent{
+public class ImageContent extends Content {
 
+    @NotEmpty
     @URL
     String url;
 

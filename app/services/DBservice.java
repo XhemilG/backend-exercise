@@ -2,6 +2,7 @@ package services;
 
 import com.google.inject.Inject;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.*;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import executors.MongoExecutionContext;
@@ -15,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.mongodb.client.model.Filters.eq;
 
-public class CRUDservice {
+public class DBservice {
 
     @Inject
     IMongoDB mongoDB;
@@ -54,13 +55,15 @@ public class CRUDservice {
         }, mEC);
     }
 
-    public <T> CompletableFuture<Long> update(Class<T> type, T item, Bson filter, String collectionName) {
+    public <T> CompletableFuture<T> update(Class<T> type, T item, Bson filter, String collectionName) {
         return CompletableFuture.supplyAsync(() -> {
             MongoCollection<T> collection = mongoDB.getMongoDatabase()
                     .getCollection(collectionName, type);
 
-            UpdateResult result = collection.replaceOne(filter, item);
-            return result.getMatchedCount();
+            FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER);
+
+            T result = collection.findOneAndReplace(filter, item, options);
+            return result;
         }, mEC);
     }
 

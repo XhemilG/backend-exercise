@@ -6,7 +6,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.typesafe.config.Config;
-import models.Contents.BasicContent;
+import models.Contents.Content;
 import models.Contents.EmailContent;
 import models.Contents.ImageContent;
 import models.Contents.TextContent;
@@ -53,7 +53,7 @@ public abstract class MongoDriver implements IMongoDB {
 			database = this.connect();
 		}
 
-		ClassModel<BasicContent> BasicContentModel = ClassModel.builder(BasicContent.class).enableDiscriminator(true).build();
+		ClassModel<Content> BasicContentModel = ClassModel.builder(Content.class).enableDiscriminator(true).build();
 		ClassModel<EmailContent> EmailContentModel = ClassModel.builder(EmailContent.class).enableDiscriminator(true).build();
 		ClassModel<TextContent> TextContentModel = ClassModel.builder(TextContent.class).enableDiscriminator(true).build();
 		ClassModel<ImageContent> ImageContentModel = ClassModel.builder(ImageContent.class).enableDiscriminator(true).build();

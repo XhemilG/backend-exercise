@@ -2,19 +2,13 @@ package services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Variable;
 import exceptions.RequestException;
 import executors.MongoExecutionContext;
 import models.Dashboard;
-import org.bson.Document;
-import org.bson.conversions.Bson;
+import models.NameValuePair;
 import org.bson.types.ObjectId;
 import play.libs.Json;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -31,62 +25,17 @@ public class DashboardService {
     HierarchyService hierarchyService;
 
     @Inject
-    CRUDservice dbService;
+    DBservice dbService;
+
+    @Inject
+    Util helper;
+
+    private static final String COLLECTION_NAME = "dashboards";
 
     public CompletableFuture<List<Dashboard>> all(List<ObjectId> objectIdList) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<Bson> pipeline = new ArrayList<>();
-
-            pipeline.add(
-                    Aggregates.match(
-                            Filters.or(
-                                    Filters.and(
-                                            Filters.size("readACL", 0),
-                                            Filters.size("writeACL", 0)
-                                    ),
-                                    Filters.or(
-                                            Filters.in("readACL", objectIdList),
-                                            Filters.in("writeACL", objectIdList)
-                                    )
-                            )
-                    )
-            );
-
-            List<Bson> contentsPipeline = new ArrayList<>();
-
-            contentsPipeline.add(
-                    Aggregates.match(
-                            new Document("$expr",
-                                    new Document("$eq",
-                                            Arrays.asList("$dashboardId", "$$id")))
-                    )
-            );
-
-            contentsPipeline.add(
-                    Aggregates.match(
-                            Filters.or(
-                                    Filters.and(
-                                            Filters.size("readACL", 0),
-                                            Filters.size("writeACL", 0)
-                                    ),
-                                    Filters.or(
-                                            Filters.in("readACL", objectIdList),
-                                            Filters.in("writeACL", objectIdList)
-                                    )
-                            )
-                    )
-            );
-
-            List<Variable<String>> variables = new ArrayList<>();
-            variables.add(new Variable<>("id", "$_id"));
-
-            pipeline.add(
-                    Aggregates.lookup("contents", variables , contentsPipeline, "contents")
-            );
-
-            return pipeline;
-        }, mEC)
-                .thenCompose(data -> dbService.all(Dashboard.class, data, "dashboards"));
+        return CompletableFuture.supplyAsync(() ->
+                    helper.lookup(true, objectIdList, "contents", "_id", "dashboardId"), mEC)
+                .thenCompose(data -> dbService.all(Dashboard.class, data, COLLECTION_NAME));
     }
 
     public CompletableFuture<Dashboard> getDashboard(List<Dashboard> dashboardList, String id) {
@@ -94,58 +43,55 @@ public class DashboardService {
             Dashboard board = new Dashboard();
 
             for(Dashboard d: dashboardList) {
-                if(d.getId().toString().equals(id))
+                if(d.getId().toString().equals(id)) {
                     board = d;
+                }
             }
-
             return hierarchyService.hierarchy(board, dashboardList);
         }, mEC);
     }
 
-    public CompletableFuture<Dashboard> update(List<ObjectId> objectIdList, String dashboardId, Dashboard updated) {
-        return write(objectIdList, dashboardId)
-                .thenCompose(filter -> dbService.update(Dashboard.class, updated, filter, "dashboards"))
+    public CompletableFuture<Dashboard> update(List<ObjectId> objectIdList, String id, Dashboard updated) {
+        return CompletableFuture.supplyAsync(() ->
+                helper.authorizationFilter(false, objectIdList, new NameValuePair("_id", id)), mEC)
+                .thenCompose(filter -> dbService.update(Dashboard.class, updated, filter, COLLECTION_NAME))
                 .thenApply(result -> {
-                    if(result == 0) {
-                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
+                    if(result == null) {
+                        throw new CompletionException(new RequestException(FORBIDDEN, "Unauthorized"));
                     }
                     return updated;
                 });
     }
 
-    public CompletableFuture<JsonNode> delete(List<ObjectId> objectIdList, String dashboardId) {
-        return write(objectIdList, dashboardId)
-                .thenCompose(filter -> dbService.delete(Dashboard.class, filter, "dashboards"))
+    public CompletableFuture<JsonNode> delete(List<ObjectId> objectIdList, String id) {
+        return CompletableFuture.supplyAsync(() ->
+                helper.authorizationFilter(false, objectIdList, new NameValuePair("_id", id)), mEC)
+                .thenCompose(filter -> dbService.delete(Dashboard.class, filter, COLLECTION_NAME))
                 .thenApply(result -> {
                     if(result == 0) {
-                        throw new CompletionException(new RequestException(FORBIDDEN, Json.toJson("Unauthorized")));
+                        throw new CompletionException(new RequestException(FORBIDDEN, "Unauthorized"));
                     }
-                    return Json.toJson("Deleted successfully: " + dashboardId);
+                    return Json.toJson("Deleted successfully: " + id);
                 });
     }
 
-    public CompletableFuture<Bson> write(List<ObjectId> objectIdList, String id) {
-        return CompletableFuture.supplyAsync(() ->
-                Filters.and(
-                        Filters.in("writeACL", objectIdList),
-                        Filters.eq("_id", new ObjectId(id))
-                ), mEC);
+    public CompletableFuture<ObjectId> save(Dashboard dashboard) {
+        return CompletableFuture.supplyAsync(() -> {
+            dashboard.setTimestamp(System.currentTimeMillis());
+            return dashboard;
+        }, mEC)
+                .thenCompose(data -> dbService.save(Dashboard.class, data, COLLECTION_NAME));
     }
 
+
     public CompletableFuture<Boolean> exists(String dashboardId) {
-        return CompletableFuture.supplyAsync(() -> {
-            try{
-                return new ObjectId(dashboardId);
-            } catch (IllegalArgumentException ex) {
-                throw new CompletionException(new RequestException(NOT_FOUND, "Dashboard doesn't exist!"));
-            }
-        }, mEC)
-                .thenCompose((data) -> dbService.find(Dashboard.class, "_id", data, "dashboards"))
+        return CompletableFuture.supplyAsync(() -> helper.getObjectIdIfValid(dashboardId), mEC)
+                .thenCompose(data -> dbService.find(Dashboard.class, "_id", data, COLLECTION_NAME))
                 .thenApply(result -> {
                     if(result == null) {
                         throw new CompletionException(new RequestException(NOT_FOUND, "Dashboard doesn't exist!"));
                     }
-                    else return true;
+                    return true;
                 });
     }
 

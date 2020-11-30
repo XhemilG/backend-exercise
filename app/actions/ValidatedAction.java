@@ -15,16 +15,19 @@ public class ValidatedAction extends Action<Validated> {
 
     @Override
     public CompletionStage<Result> call(Http.Request request) {
+        try{
+            JsonNode node = request.body().asJson();
+            Object user = Json.fromJson(node, configuration.value());
 
-        JsonNode node = request.body().asJson();
-        Object user = Json.fromJson(node, configuration.value());
+            String errors = HibernateValidator.validate(user);
+            if (!Strings.isNullOrEmpty(errors)) {
+                return CompletableFuture.completedFuture(badRequest(errors));
+            }
+            request = request.addAttr(Attributes.TYPED_KEY, user);
 
-        String errors = HibernateValidator.validate(user);
-        if (!Strings.isNullOrEmpty(errors)) {
-            return CompletableFuture.completedFuture(badRequest(errors));
+            return delegate.call(request);
+        } catch (RuntimeException ex){
+            return CompletableFuture.completedFuture(badRequest(Json.toJson(ex.getMessage())));
         }
-        request = request.addAttr(Attributes.TYPED_KEY, user);
-
-        return delegate.call(request);
     }
 }
