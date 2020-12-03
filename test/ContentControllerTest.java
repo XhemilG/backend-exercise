@@ -107,6 +107,7 @@ public class ContentControllerTest extends WithApplication {
     public void contentForbiddenTest() {
         final Http.RequestBuilder contentDeleteRequest = new Http.RequestBuilder().method("DELETE").uri("/api/dashboard/5fb52536320e8fa591d40c9c/content/5fb52536320e8fa591d40abc");
         contentDeleteRequest.header("token", UNAUTHORIZED_USER_TOKEN);
+        contentDeleteRequest.header("Content-Type", "application/json");
 
         final Result result = route(app, contentDeleteRequest);
         assertEquals(FORBIDDEN, result.status());

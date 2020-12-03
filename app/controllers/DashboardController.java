@@ -5,10 +5,7 @@ import actions.Authenticated;
 import actions.Validated;
 import com.google.inject.Inject;
 import models.Dashboard;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.Results;
+import play.mvc.*;
 import services.DashboardService;
 import services.HierarchyService;
 import services.SerializationService;
@@ -60,6 +57,7 @@ public class DashboardController extends Controller {
                 .exceptionally(DatabaseUtils::throwableToResult);
     }
 
+    @BodyParser.Of(BodyParser.Json.class)
     @Validated(value = Dashboard.class)
     public CompletableFuture<Result> update(Http.Request request, String id) {
         return dashboardService.exists(id)
@@ -70,6 +68,7 @@ public class DashboardController extends Controller {
                 .exceptionally(DatabaseUtils::throwableToResult);
     }
 
+    @BodyParser.Of(BodyParser.Json.class)
     public CompletableFuture<Result> delete(Http.Request request, String id) {
         return dashboardService.exists(id)
                 .thenCompose(data -> userService.getUserACL(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
@@ -79,6 +78,7 @@ public class DashboardController extends Controller {
                 .exceptionally(DatabaseUtils::throwableToResult);
     }
 
+    @BodyParser.Of(BodyParser.Json.class)
     @Validated(value = Dashboard.class)
     public CompletableFuture<Result> save(Http.Request request) {
         return dashboardService.save((Dashboard) request.attrs().get(Attributes.TYPED_KEY))

@@ -79,6 +79,7 @@ public class DashboardControllerTest extends WithApplication {
     public void dashboardDeleteForbiddenTest() {
         final Http.RequestBuilder dashboardDeleteRequest = new Http.RequestBuilder().method("DELETE").uri("/api/dashboard/5fb52536320e8fa591d40c9c");
         dashboardDeleteRequest.header("token", UNAUTHORIZED_USER_TOKEN);
+        dashboardDeleteRequest.header("Content-Type", "application/json");
 
         final Result result = route(app, dashboardDeleteRequest);
         assertEquals(FORBIDDEN, result.status());

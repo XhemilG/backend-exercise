@@ -75,9 +75,9 @@ public class Util {
         return result;
     }
 
-    public List<Bson> lookup(boolean isToRead, List<ObjectId> authIndicatorIds, String fromCollection, String localField, String externalField) {
+    public List<Bson> lookup(boolean isForReading, List<ObjectId> authIndicatorIds, String fromCollection, String localField, String externalField) {
         List<Bson> pipeline = new ArrayList<>();
-        pipeline.add(Aggregates.match(authorizationFilter(isToRead, authIndicatorIds)));
+        pipeline.add(Aggregates.match(authorizationFilter(isForReading, authIndicatorIds)));
 
         List<Bson> secondaryPipeline = new ArrayList<>();
         secondaryPipeline.add(
@@ -87,7 +87,7 @@ public class Util {
                                         Arrays.asList("$" + externalField, "$$id")))
                 )
         );
-        secondaryPipeline.add(Aggregates.match(authorizationFilter(isToRead, authIndicatorIds)));
+        secondaryPipeline.add(Aggregates.match(authorizationFilter(isForReading, authIndicatorIds)));
 
         List<Variable<String>> variables = new ArrayList<>();
         variables.add(new Variable<>("id", "$" + localField));

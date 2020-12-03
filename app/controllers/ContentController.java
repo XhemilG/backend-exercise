@@ -5,10 +5,7 @@ import actions.Authenticated;
 import actions.Validated;
 import com.google.inject.Inject;
 import models.Contents.Content;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.Results;
+import play.mvc.*;
 import services.DBservice;
 import services.ContentService;
 import services.SerializationService;
@@ -53,6 +50,7 @@ public class ContentController extends Controller {
                 .exceptionally(DatabaseUtils::throwableToResult);
     }
 
+    @BodyParser.Of(BodyParser.Json.class)
     @Validated(value = Content.class)
     public CompletableFuture<Result> update(Http.Request request, String dashboardId, String contentId) {
         return contentService.exists(dashboardId, contentId)
@@ -64,6 +62,7 @@ public class ContentController extends Controller {
                 .exceptionally(DatabaseUtils::throwableToResult);
     }
 
+    @BodyParser.Of(BodyParser.Json.class)
     public CompletableFuture<Result> delete(Http.Request request, String dashboardId, String contentId) {
         return contentService.exists(dashboardId, contentId)
                 .thenCompose(data -> userService.getUserACL(request.attrs().get(Attributes.AUTHENTICATION_TYPED_KEY)))
@@ -74,6 +73,7 @@ public class ContentController extends Controller {
                 .exceptionally(DatabaseUtils::throwableToResult);
     }
 
+    @BodyParser.Of(BodyParser.Json.class)
     @Validated(value = Content.class)
     public CompletableFuture<Result> save(Http.Request request, String dashboardId) {
         return contentService.exists(dashboardId)
